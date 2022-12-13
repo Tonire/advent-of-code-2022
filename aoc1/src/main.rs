@@ -32,6 +32,14 @@ fn main()
     }
     sorted_sum.sort();
     let inverted_sorted: Vec<i32> = sorted_sum.into_iter().rev().collect();
-    println!("{}", inverted_sorted[0]);
+
+    let mut top_three: i32 = 0;
+    for n in 0..3
+    {
+        println!("{}: {}", n, inverted_sorted[n]);
+        top_three += inverted_sorted[n];
+    }
+    println!("Sum of the top three: {}", top_three);
+
     
 }
