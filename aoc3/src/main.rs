@@ -1,11 +1,13 @@
 use std::fs;
 
+#[derive(Clone)]
 struct Rucksack
 {
     first_compartiment: String,
     second_compartiment: String,
-    repeated_item: Vec<Option<char>>,
+    repeated_item: Vec<Option<char>>
 }
+
 impl Rucksack
 {
     fn fill_repeated_item(&mut self)
@@ -22,6 +24,13 @@ impl Rucksack
             }
         }
     }
+    
+    fn get_complete_rucksack(&self) -> String
+    {
+        let mut owned_str: String = self.first_compartiment.to_owned();
+        owned_str.push_str(&self.second_compartiment);
+        return owned_str;
+    }
 }
 fn get_priority(item: char) -> i32
 {
@@ -35,6 +44,13 @@ fn get_priority(item: char) -> i32
         return ret_val - 96;
     }
 }
+
+fn get_badge(_group: &Vec<Rucksack>) -> char
+{
+
+    return '0';
+}
+
 fn main() 
 {
     let file_contents: String = fs::read_to_string("input.txt").expect("File not found: input.txt");
@@ -46,19 +62,30 @@ fn main()
             second_compartiment: String::from(split_line.1),
             repeated_item: vec![]
         };
+
         new_rucksack.fill_repeated_item();
         new_rucksack
     }).collect();
 
     let mut sum_priorities: i32 = 0;
-    for ruck in rucksack_vec
+    for ruck in &rucksack_vec
     {
-        /*for repeated_opt in ruck.repeated_item
-        {
-            sum_priorities += get_priority(repeated_opt.unwrap());
-        }*/
         sum_priorities += get_priority(ruck.repeated_item[0].unwrap());
     }
     println!("{}", sum_priorities);
-    println!("{}", get_priority('g'));
+
+    let mut group_count: i32 = 0;
+    let mut badges_vec: Vec<Rucksack> = vec![];
+
+    for ruck in rucksack_vec
+    {
+        badges_vec.push(ruck.clone());
+        group_count += 1;
+        if group_count == 3
+        {
+            let badge: char = get_badge(&badges_vec);
+            group_count = 0;
+        }
+    }
+
 }
