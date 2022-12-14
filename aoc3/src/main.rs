@@ -3,6 +3,7 @@ use std::fs;
 #[derive(Clone)]
 struct Rucksack
 {
+    complete_rucksack: String,
     first_compartiment: String,
     second_compartiment: String,
     repeated_item: Vec<Option<char>>
@@ -14,22 +15,13 @@ impl Rucksack
     {
         for letter in self.first_compartiment.chars()
         {
-            for second_letter in self.second_compartiment.chars()
+            if self.second_compartiment.contains(letter)
             {
-                if letter.eq(&second_letter)
-                {
-                    self.repeated_item.push(Some(letter));
-                    println!("Found repeated item! {} -> prio: {}", letter, get_priority(letter));
-                }
+                self.repeated_item.push(Some(letter));
+                println!("Found repeated item! {} -> prio: {}", letter, get_priority(letter));
+
             }
         }
-    }
-    
-    fn get_complete_rucksack(&self) -> String
-    {
-        let mut owned_str: String = self.first_compartiment.to_owned();
-        owned_str.push_str(&self.second_compartiment);
-        return owned_str;
     }
 }
 fn get_priority(item: char) -> i32
@@ -45,10 +37,19 @@ fn get_priority(item: char) -> i32
     }
 }
 
-fn get_badge(_group: &Vec<Rucksack>) -> char
+fn get_badge(_group: Vec<Rucksack>) -> Result<char, String>
 {
-
-    return '0';
+    let ruck: &Rucksack = &_group[0];
+    for first_char in ruck.complete_rucksack.chars()
+    {
+        let ruck_second: &Rucksack = &_group[1];
+        let ruck_third: &Rucksack = &_group[2];
+        if ruck_second.complete_rucksack.contains(first_char) && ruck_third.complete_rucksack.contains(first_char)
+        {
+            return Ok(first_char);
+        }
+    }
+    Err("Badge not found".to_string())
 }
 
 fn main() 
@@ -58,8 +59,9 @@ fn main()
     {
         let split_line: (&str, &str) = line.split_at(line.len()/2);
         let mut new_rucksack = Rucksack {
-            first_compartiment: String::from(split_line.0),
-            second_compartiment: String::from(split_line.1),
+            complete_rucksack: String::from(line.trim_end()),
+            first_compartiment: String::from(split_line.0.trim_end()),
+            second_compartiment: String::from(split_line.1.trim_end()),
             repeated_item: vec![]
         };
 
@@ -72,20 +74,22 @@ fn main()
     {
         sum_priorities += get_priority(ruck.repeated_item[0].unwrap());
     }
-    println!("{}", sum_priorities);
+    println!("Total priorities: {}", sum_priorities);
 
-    let mut group_count: i32 = 0;
-    let mut badges_vec: Vec<Rucksack> = vec![];
-
-    for ruck in rucksack_vec
+    let mut i: usize = 0;
+    let mut badges_priorities = 0;
+    while i < rucksack_vec.len()
     {
-        badges_vec.push(ruck.clone());
-        group_count += 1;
-        if group_count == 3
+        let rucksack_group: Vec<Rucksack> = 
+            vec![rucksack_vec[i].clone(), rucksack_vec[i+1].clone(), rucksack_vec[i+2].clone()];
+        let group_badge: char = match get_badge(rucksack_group)
         {
-            let badge: char = get_badge(&badges_vec);
-            group_count = 0;
-        }
+            Ok(found_badge) => found_badge,
+            Err(err_message) => panic!("{}",err_message),
+        };
+        badges_priorities += get_priority(group_badge);
+        i += 3;
     }
+    println!("Total badges priorities: {}", badges_priorities);
 
 }
