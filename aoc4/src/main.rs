@@ -17,6 +17,15 @@ impl Section
         }
         return false;
     }
+
+    fn overlaps(self: &Section, other: &Section) -> bool
+    {
+        if self.start <= other.end && self.end >= other.start
+        {
+            return true;
+        }
+        return false;
+    }
 }
 
 fn main() 
@@ -39,13 +48,21 @@ fn main()
     }).collect();
 
     let mut sum_sections_repeated: i32 = 0;
+    let mut sum_sections_overlap: i32 = 0;
     for current in sections_vec
     {
         if current.0.contains(&current.1) || current.1.contains(&current.0)
         {
-            println!("Section: {} - {} contains {} - {}", current.0.start, current.0.end, current.1.start, current.1.end);
+            //println!("Section: {} - {} contains {} - {}", current.0.start, current.0.end, current.1.start, current.1.end);
             sum_sections_repeated += 1;
+        }
+        if current.0.overlaps(&current.1) || current.1.overlaps(&current.0)
+        {
+            println!("Section: {} - {} overlaps {} - {}", current.0.start, current.0.end, current.1.start, current.1.end);
+            sum_sections_overlap += 1;
         }
     }
     println!("# Repeated sections: {}", sum_sections_repeated);
+    println!("# Overlaped sections: {}", sum_sections_overlap);
+
 }
