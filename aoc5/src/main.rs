@@ -1,4 +1,4 @@
-use std::{fs, ops::Range};
+use std::{fs, thread::current};
 
 fn part1(movements_vector: &Vec<(i32, i32, i32)>)
 {
@@ -49,20 +49,15 @@ fn part2(movements_vector: &Vec<(i32, i32, i32)>)
         ['G', 'L', 'D'].to_vec()
     ];
     
+    
     for current_move in movements_vector
     {
-        let split_location: usize = (current_move.0 - 1) as usize;
-        let from_stack: &Vec<char> = &mut stacks[(current_move.1 - 1) as usize];
-        
-        let mut new_vec: Vec<char> = Vec::new();
-        for current in split_location..from_stack.len() - 1
-        {
-            new_vec.push(from_stack[current]);
-        }
-        let to_stack = &mut stacks[(current_move.2 - 1) as usize];
-        to_stack.append(&mut new_vec);
+        println!("{}, {}, {}", current_move.0, current_move.1, current_move.2);
+        let split_location: usize = (current_move.0 ) as usize;
 
-        //from_stack.cut
+        let from_stack_len = stacks[(current_move.1 - 1) as usize].len();
+        let removed = stacks[(current_move.1 - 1) as usize].split_off(from_stack_len - split_location);
+        stacks[(current_move.2 - 1) as usize].extend(removed);
     }
 
     for stack in stacks
