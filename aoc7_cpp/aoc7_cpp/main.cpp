@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <functional>
 
 struct File
 {
@@ -16,6 +17,18 @@ struct Directory
 	Directory* parent;
 	std::vector<File*> files;
 	std::vector<Directory*> child_dirs;
+
+	~Directory()
+	{
+		for (File* current : files)
+		{
+			delete current;
+		}
+		for (Directory* current : child_dirs)
+		{
+			delete current;
+		}
+	}
 
 	Directory* get_dir(const std::string& dir_name)
 	{
@@ -54,18 +67,16 @@ struct Directory
 		}
 	}
 
-	std::vector<Directory*> get_if_size_less_than(const std::size_t comp_size)
+	std::vector<Directory*> filter_dir(std::function<bool(Directory*)> compare_function)
 	{
 		std::vector<Directory*> ret_vec;
 
-		std::copy_if(child_dirs.begin(), child_dirs.end(), std::back_inserter(ret_vec), [comp_size](Directory* current) {
-			return current->size <= comp_size;
-		});
+		std::copy_if(child_dirs.begin(), child_dirs.end(), std::back_inserter(ret_vec), compare_function);
 		std::vector<Directory*> child_greater;
 		for (Directory* child : child_dirs)
 		{
 			
-			std::vector<Directory*> childre_dirs = child->get_if_size_less_than(comp_size);
+			std::vector<Directory*> childre_dirs = child->filter_dir(compare_function);
 			child_greater.insert(child_greater.end(), childre_dirs.begin(), childre_dirs.end());
 		}
 		ret_vec.insert(ret_vec.end(), child_greater.begin(), child_greater.end());
@@ -126,17 +137,40 @@ Command extract_command(const std::vector<std::string>& input_file, const std::s
 	return ret_command;
 }
 
-void part1(Directory file_system)
+void part1(Directory* file_system)
 {
-	file_system.sort_dir();
+	file_system->sort_dir();
 	std::size_t filtered_dirs_total_size = 0;
-	std::vector<Directory*> filtered_child_dirs = file_system.get_if_size_less_than(100000);
+	std::vector<Directory*> filtered_child_dirs = file_system->filter_dir([](Directory* current) {
+			return current->size <= 100000;
+	});
 	for (Directory* current : filtered_child_dirs)
 	{
 		filtered_dirs_total_size += current->size;
 	}
 	std::cout << "---------PART 1---------\n";
 	std::cout << "filtered_dirs_total_size: " << filtered_dirs_total_size << "\n";
+}
+
+
+void part2(Directory* file_system)
+{
+	constexpr std::size_t total_space = 70000000;
+	constexpr std::size_t required_space = 30000000;
+	const std::size_t used_space = file_system->calculate_dir_size();
+	const std::size_t remaining_space = total_space - used_space;
+	const std::size_t needed_space = required_space - remaining_space;
+
+	file_system->sort_dir();
+	std::vector<Directory*> filtered_child_dirs = file_system->filter_dir([needed_space](Directory* current) {
+		return current->size >= needed_space;
+	});
+
+	sort(filtered_child_dirs.begin(), filtered_child_dirs.end(), [](const Directory* first_dir, const Directory* second_dir) {
+		return first_dir->size < second_dir->size;
+	});
+	std::cout << "---------PART 2---------\n";
+	std::cout << "First directory greater than "<< needed_space << " -> " << filtered_child_dirs[0]->name << " with a size of: " << filtered_child_dirs[0]->size << "\n";
 }
 
 int main(int argc, char** argv)
@@ -154,15 +188,15 @@ int main(int argc, char** argv)
 			commands.push_back(found_command);
 		}
 	}
-	Directory file_system { 0, "/" };
-	Directory* current_dir = &file_system;
+	Directory* file_system = new Directory{ 0, "/" };
+	Directory* current_dir = file_system;
 	for (const Command current_command : commands)
 	{
 		if (current_command.name == "cd")
 		{
 			if (current_command.args == "/")
 			{
-				current_dir = &file_system;
+				current_dir = file_system;
 				continue;
 			}
 			if (current_command.args == "..")
@@ -199,7 +233,9 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	file_system.calculate_dir_size();
+	file_system->calculate_dir_size();
 	part1(file_system);
+	part2(file_system);
+	delete file_system;
 	return 0;
 }
